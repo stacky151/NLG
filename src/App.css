@@ -1,86 +1,82 @@
-/* General Layout */
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-.app-container h1 {
+/* --- Global & Layout --- */
+body { background-color: #202225; color: #dcddde; }
+#root { max-width: 1280px; margin: 0 auto; padding: 2rem; }
+.card { background-color: #2f3136; border-radius: 8px; padding: 2rem; }
+button { background-color: #5865f2; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+button:hover { opacity: 0.9; }
+.back-button { background-color: #4f545c; }
+.logout-button { background-color: #ed4245; }
+
+/* --- Header --- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
   margin-bottom: 2rem;
+  border-bottom: 1px solid #40444b;
 }
-.card {
-  padding: 2em;
-  width: 100%;
-  background-color: #2f3136;
-  border-radius: 8px;
-}
+.app-header h2 { margin: 0; }
+.app-header nav { display: flex; gap: 1rem; }
 
-/* Specific Views */
-.dashboard-layout, .plugin-menu, .guild-selector {
-  text-align: left;
-}
-
-/* Guild Selector */
+/* --- Guild Selector --- */
 .guild-selector h2, .guild-selector p { text-align: center; }
 .guild-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
 }
 .guild-card {
   background-color: #36393f;
-  border: 1px solid #40444b;
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
-.guild-card:hover {
-  transform: translateY(-5px);
-  border-color: #7289da;
+.guild-card:hover { transform: translateY(-5px); }
+.guild-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #4f545c;
 }
 
-/* Plugin Menu */
-.plugin-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #40444b;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
-}
-.plugin-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
+/* --- Plugin Menu --- */
+.plugin-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #40444b;}
+.plugin-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
 .plugin-card {
   background-color: #36393f;
-  border: 1px solid #40444b;
   border-radius: 8px;
   padding: 1.5rem;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: border-color 0.2s ease;
+  border: 1px solid #40444b;
 }
-.plugin-card:hover {
-  transform: translateY(-5px);
-  border-color: #7289da;
-}
-.plugin-card h4 {
-  margin-top: 0;
-  font-size: 1.2rem;
-}
+.plugin-card:hover { border-color: #7289da; }
+.plugin-card.disabled { opacity: 0.5; cursor: not-allowed; }
+.plugin-card h4, .plugin-card p { margin: 0; }
+.plugin-card h4 { margin-bottom: 0.5rem; }
 
-/* Announcement Form */
-.dashboard-layout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
+/* --- Announcement Form & Dashboard --- */
+.dashboard-layout { display: flex; flex-wrap: wrap; gap: 2rem; text-align: left; }
 .form-container { flex: 2; min-width: 500px; }
 .preview-container { flex: 1; min-width: 320px; position: sticky; top: 2rem; align-self: flex-start; }
-
-.dashboard-form { /* ... existing form styles ... */ }
-
-/* ... other existing styles for preview, buttons, etc. ... */
+.dashboard-form { display: flex; flex-direction: column; gap: 1.2rem; margin-top: 1rem; }
+.dashboard-form label { font-weight: bold; }
+.dashboard-form input, .dashboard-form textarea, .dashboard-form select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #202225;
+  background-color: #202225;
+  color: #dcddde;
+  font-size: 1rem;
+}
+.dashboard-form textarea { min-height: 120px; }
+p.field-explanation { font-size: 0.8rem; color: #8e9297; margin-top: -1rem; }
