@@ -48,9 +48,9 @@ function GuildSelector({ guilds, onSelectGuild, isLoading }) {
           <button key={guild.id} onClick={() => onSelectGuild(guild)} className="guild-card">
             {guild.name}
           </button>
-        )) : <p>No mutual servers found. Make sure the bot is in a server that you are also in.</p>}
+        )) : <p>No mutual servers found. Please make sure the bot has been invited to a server that you are in.</p>}
       </div>
-       <a href={logoutUrl}><button className="logout-button">Logout</button></a>
+      <a href={logoutUrl}><button className="logout-button">Logout</button></a>
     </div>
   );
 }
@@ -73,11 +73,12 @@ function Dashboard({ user, selectedGuild, onBack }) {
     setPages([...pages, { embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '' }]);
     setActivePage(pages.length);
   };
-
+  
   const removePage = (index) => {
+    if (pages.length <= 1) return;
     const newPages = pages.filter((_, i) => i !== index);
     setPages(newPages);
-    setActivePage(Math.max(0, index - 1));
+    setActivePage(Math.max(0, activePage - 1));
   };
 
   const handleSubmit = (e) => {
@@ -158,7 +159,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [guilds, setGuilds] = useState([]);
   const [selectedGuild, setSelectedGuild] = useState(null);
-  const [authStatus, setAuthStatus] = useState('Checking login status...');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetch(userApiUrl, { credentials: 'include' })
@@ -166,29 +167,33 @@ function App() {
       .then((data) => {
         if (data) {
           setUser(data);
-          setAuthStatus('');
           // If user is logged in, fetch their guilds
           fetch(guildsApiUrl, { credentials: 'include' })
             .then(res => res.json())
-            .then(setGuilds)
-            .catch(err => console.error("Failed to fetch guilds", err));
+            .then(data => {
+              setGuilds(data);
+              setIsLoading(false);
+            })
+            .catch(err => {
+              console.error("Failed to fetch guilds", err);
+              setIsLoading(false);
+            });
         } else {
-          setAuthStatus('You are not logged in. Please click the button below.');
+          setIsLoading(false);
         }
       })
-      .catch(() => setAuthStatus('Error: Could not connect to the server.'));
+      .catch(() => setIsLoading(false));
   }, []);
 
   let content;
   if (user && selectedGuild) {
     content = <Dashboard user={user} selectedGuild={selectedGuild} onBack={() => setSelectedGuild(null)} />;
   } else if (user) {
-    content = <GuildSelector guilds={guilds} onSelectGuild={setSelectedGuild} isLoading={guilds.length === 0 && authStatus === ''} />;
+    content = <GuildSelector guilds={guilds} onSelectGuild={setSelectedGuild} isLoading={isLoading} />;
   } else {
     content = (
       <div>
-        <p>{authStatus}</p>
-        <a href={loginUrl}><button>Login with Discord</button></a>
+        {isLoading ? <p>Checking login status...</p> : <a href={loginUrl}><button>Login with Discord</button></a>}
       </div>
     );
   }

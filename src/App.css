@@ -87,6 +87,8 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  border-bottom: 1px solid #40444b;
+  padding-bottom: 1rem;
 }
 .page-tabs button {
   background-color: #40444b;
@@ -133,7 +135,6 @@
   font-size: 1.1rem;
   text-align: center;
 }
-
 
 /* Preview Styles */
 .discord-mock {
