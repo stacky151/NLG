@@ -44,13 +44,13 @@ function App() {
     setPostToEdit(post);
     setView('form');
   };
-
+  
   const renderContent = () => {
     switch(view) {
       case 'servers':
-        return <GuildSelector guilds={guilds} onSelect={g => { setSelectedGuild(g); setView('plugins'); }} />;
+        return <GuildSelector guilds={guilds} onSelect={g => { setSelectedGuild(g); setView('plugins'); }} isLoading={isLoading} />;
       case 'plugins':
-        return <PluginMenu guild={selectedGuild} onBack={() => setView('servers')} onSelect={plugin => setView(plugin)} />;
+        return <PluginMenu guild={selectedGuild} onBack={() => { setSelectedGuild(null); setView('servers'); }} onSelect={plugin => setView(plugin)} />;
       case 'form':
         return <AnnouncementForm guild={selectedGuild} onBack={() => setView('plugins')} postToEdit={postToEdit} onFormSubmit={() => { setPostToEdit(null); setView('scheduled'); }} />;
       case 'scheduled':
@@ -90,7 +90,8 @@ function Header({ user, onServersClick }) {
   );
 }
 
-function GuildSelector({ guilds, onSelect }) {
+function GuildSelector({ guilds, onSelect, isLoading }) {
+  if (isLoading) return <p>Loading servers...</p>;
   return (
     <div className="guild-selector">
       <h2>Select a Server</h2>
@@ -99,14 +100,14 @@ function GuildSelector({ guilds, onSelect }) {
         {guilds.length > 0 ? guilds.map(guild => (
           <div key={guild.id} className="guild-card" onClick={() => onSelect(guild)}>
             <img 
-              src={guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : '/default-icon.png'} 
+              src={guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : './default-icon.png'} 
               alt={`${guild.name} icon`} 
               className="guild-icon" 
-              onError={(e) => { e.target.onerror = null; e.target.src="/default-icon.png"}}
+              onError={(e) => { e.target.onerror = null; e.target.src="./default-icon.png"}}
             />
             <span>{guild.name}</span>
           </div>
-        )) : <p>No mutual servers found. Make sure the bot is in a server that you are in.</p>}
+        )) : <p>No mutual servers found. Make sure your bot is in a server that you are in and has permissions to view channels.</p>}
       </div>
     </div>
   );
@@ -135,12 +136,22 @@ function PluginMenu({ guild, onBack, onSelect }) {
 }
 
 function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
+  const [roles, setRoles] = useState([]);
+  const [roleId, setRoleId] = useState(postToEdit?.roleId || '');
   const [channelId, setChannelId] = useState(postToEdit?.channelId || '');
   const [message, setMessage] = useState(postToEdit?.message || '');
-  const [pages, setPages] = useState(postToEdit?.pages || [{ embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '' }]);
+  const [pages, setPages] = useState(postToEdit?.pages || [{ embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '', embedColor: '#0099ff' }]);
   const [scheduleDate, setScheduleDate] = useState(postToEdit?.scheduleDate ? new Date(postToEdit.scheduleDate).toISOString().slice(0, 16) : '');
   const [statusMessage, setStatusMessage] = useState('');
   const [activePage, setActivePage] = useState(0);
+
+  useEffect(() => {
+    // Fetch roles for the selected guild
+    fetch(`${API_BASE}/api/guilds/${guild.id}/roles`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(setRoles)
+      .catch(err => console.error("Failed to fetch roles", err));
+  }, [guild.id]);
 
   const handlePageChange = (index, field, value) => {
     const newPages = [...pages];
@@ -149,7 +160,7 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
   };
 
   const addPage = () => {
-    setPages([...pages, { embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '' }]);
+    setPages([...pages, { embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '', embedColor: '#0099ff' }]);
     setActivePage(pages.length);
   };
   
@@ -166,13 +177,13 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
     
     const url = postToEdit ? `${API_BASE}/api/scheduled/${postToEdit.id}` : `${API_BASE}/api/announcement`;
     const method = postToEdit ? 'PUT' : 'POST';
-    const payload = { guildId: guild.id, channelId, message, pages, scheduleDate };
+    const payload = { guildId: guild.id, channelId, message, pages, scheduleDate, roleId };
 
     fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      credentials: 'include' // Crucial fix for authorization
+      credentials: 'include'
     })
     .then(res => res.text().then(text => ({ ok: res.ok, text })))
     .then(({ ok, text }) => {
@@ -186,15 +197,26 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
      <div className="dashboard-layout">
         <div className="form-container">
           <div className="dashboard-header">
-            <h2>{postToEdit ? 'Edit Announcement' : 'New Announcement'} for: {guild.name}</h2>
+            <h2>{postToEdit ? 'Edit Announcement' : '📢 New Announcement'} for: {guild.name}</h2>
             <button onClick={onBack} className="back-button">← Back to Plugins</button>
           </div>
           <form onSubmit={handleSubmit} className="dashboard-form">
-              <label>Channel</label>
-              <select value={channelId} onChange={e => setChannelId(e.target.value)} required>
-                <option value="" disabled>-- Select a Channel --</option>
-                {guild.channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
-              </select>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Channel</label>
+                  <select value={channelId} onChange={e => setChannelId(e.target.value)} required>
+                    <option value="" disabled>-- Select a Channel --</option>
+                    {guild.channels.map(c => <option key={c.id} value={c.id}>#{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Mention Role (optional)</label>
+                  <select value={roleId} onChange={e => setRoleId(e.target.value)}>
+                    <option value="">-- No Role --</option>
+                    {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </select>
+                </div>
+              </div>
 
               <label>Main Message (optional)</label>
               <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Text above embed..."></textarea>
@@ -234,7 +256,7 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
               {statusMessage && <p className="status-message">{statusMessage}</p>}
           </form>
         </div>
-        <LivePreview message={message} pages={pages} activePage={activePage} />
+        <LivePreview message={message} pages={pages} activePage={activePage} roleId={roleId} roles={roles} />
      </div>
   );
 }
@@ -275,7 +297,7 @@ function ScheduledPostsList({ guild, onBack, onEdit }) {
     return (
         <div className="scheduled-posts">
             <div className="plugin-header">
-                <h2>Scheduled Posts for: {guild.name}</h2>
+                <h2>🗓️ Scheduled Posts for: {guild.name}</h2>
                 <button onClick={onBack} className="back-button">← Back to Plugins</button>
             </div>
             <div className="posts-list">
@@ -297,8 +319,10 @@ function ScheduledPostsList({ guild, onBack, onEdit }) {
     );
 }
 
-function LivePreview({ message, pages, activePage }) {
+function LivePreview({ message, pages, activePage, roleId, roles }) {
   const currentPage = pages[activePage] || {};
+  const selectedRole = roles.find(r => r.id === roleId);
+
   return (
     <div className="preview-container">
       <h3>Live Preview</h3>
@@ -307,8 +331,11 @@ function LivePreview({ message, pages, activePage }) {
           <div className="avatar"></div>
           <div className="message-content">
             <div className="username">Announcement Bot <span className="bot-tag">BOT</span></div>
-            <div className="text-content">{message}</div>
-            <div className="embed">
+            <div className="text-content">
+              {selectedRole && <span className="role-mention">{selectedRole.name}</span>}
+              {' '}{message}
+            </div>
+            <div className="embed" style={{ borderColor: currentPage.embedColor || '#0099ff' }}>
               <div className="embed-title">{currentPage.embedTitle || 'Embed Title'}</div>
               <div className="embed-description">{currentPage.embedDescription || 'Description will appear here...'}</div>
             </div>
