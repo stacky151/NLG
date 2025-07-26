@@ -1,5 +1,5 @@
 #root {
-  max-width: 1280px;
+  max-width: 1600px; /* Wider layout */
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
@@ -7,6 +7,8 @@
 
 .card {
   padding: 2em;
+  width: 100%;
+  max-width: 1400px; /* Wider card */
 }
 
 /* New Layout Styles */
@@ -19,15 +21,30 @@
 
 .form-container {
   flex: 2;
-  min-width: 400px;
+  min-width: 500px; /* Wider form area */
 }
 
 .preview-container {
   flex: 1;
-  min-width: 300px;
+  min-width: 320px;
+  position: sticky;
+  top: 2rem;
+  align-self: flex-start;
 }
 
 /* Form Styles */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.back-button {
+  background: none;
+  border: 1px solid #555;
+  padding: 0.5rem 1rem;
+}
+
 .dashboard-form {
   display: flex;
   flex-direction: column;
@@ -35,7 +52,6 @@
   background-color: #2f3136;
   padding: 1.5rem;
   border-radius: 8px;
-  margin-top: 1rem;
 }
 
 .dashboard-form label {
@@ -56,26 +72,33 @@
 }
 
 .dashboard-form textarea {
-  min-height: 100px;
+  min-height: 120px;
   resize: vertical;
 }
 
-.dashboard-form button {
+.dashboard-form button[type="submit"] {
   margin-top: 1rem;
-}
-
-.status-message {
-  margin-top: 1rem;
-  font-weight: bold;
-}
-
-.logout-button {
-  margin-top: 2rem;
-  background-color: #7289da;
-  border-color: #7289da;
+  background-color: #3ba55d;
+  border-color: #3ba55d;
 }
 
 /* Pagination Styles */
+.page-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.page-tabs button {
+  background-color: #40444b;
+}
+.page-tabs button.active {
+  background-color: #7289da;
+}
+.add-page-btn {
+  width: 40px;
+  height: 40px;
+}
+
 .page-editor {
   border: 1px solid #40444b;
   padding: 1rem;
@@ -85,6 +108,32 @@
   flex-direction: column;
   gap: 1rem;
 }
+.remove-page-btn {
+  background-color: #ed4245;
+  border-color: #ed4245;
+}
+
+/* Guild Selector Styles */
+.guild-selector {
+  text-align: center;
+}
+.guild-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+.guild-card {
+  width: 150px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
 
 /* Preview Styles */
 .discord-mock {
@@ -93,12 +142,10 @@
   border-radius: 8px;
   padding: 1rem;
   font-family: 'Whitney', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  line-height: 1.375rem;
 }
 
-.discord-message {
-  display: flex;
-}
-
+.discord-message { display: flex; }
 .avatar {
   width: 40px;
   height: 40px;
@@ -108,14 +155,16 @@
   margin-right: 1rem;
 }
 
-.message-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.username {
-  font-weight: bold;
+.message-content { display: flex; flex-direction: column; }
+.username { font-weight: 500; color: #fff; }
+.bot-tag {
+  background-color: #5865f2;
   color: #fff;
+  font-size: 0.625rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  vertical-align: text-top;
+  margin-left: 4px;
 }
 
 .embed {
@@ -127,23 +176,21 @@
   max-width: 500px;
 }
 
-.embed-title {
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 0.5rem;
-}
-
-.embed-description {
-  white-space: pre-wrap; /* This makes line breaks work */
-}
-
+.embed-title { font-weight: bold; color: #fff; margin-bottom: 0.5rem; }
+.embed-description { white-space: pre-wrap; word-break: break-word; }
 .discord-button {
   display: inline-block;
-  background-color: #5865f2;
+  background-color: #4752c4;
   color: #fff;
   padding: 10px 16px;
   border-radius: 3px;
   margin-top: 1rem;
   text-align: center;
   font-weight: 500;
+  border: none;
+}
+.logout-button {
+  margin-top: 2rem;
+  background-color: #7289da;
+  border-color: #7289da;
 }
