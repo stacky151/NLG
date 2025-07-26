@@ -6,15 +6,16 @@ const API_BASE = 'http://node.qwartie.org:2002';
 const loginUrl = `${API_BASE}/auth/discord`;
 const logoutUrl = `${API_BASE}/auth/logout`;
 
-// --- Main App Component ---
+// --- The Main App Component ---
 function App() {
   const [user, setUser] = useState(null);
   const [guilds, setGuilds] = useState([]);
   const [selectedGuild, setSelectedGuild] = useState(null);
   const [view, setView] = useState('loading'); // loading, login, servers, plugins, form, scheduled
-  const [postToEdit, setPostToEdit] = useState(null); // For editing scheduled posts
+  const [postToEdit, setPostToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch user and guild data on initial load
   useEffect(() => {
     fetch(`${API_BASE}/api/user`, { credentials: 'include' })
       .then((res) => res.ok ? res.json() : null)
@@ -51,7 +52,7 @@ function App() {
       case 'plugins':
         return <PluginMenu guild={selectedGuild} onBack={() => setView('servers')} onSelect={plugin => setView(plugin)} />;
       case 'form':
-        return <AnnouncementForm guild={selectedGuild} onBack={() => setView('plugins')} postToEdit={postToEdit} onFormSubmit={() => { setPostToEdit(null); setView('plugins'); }} />;
+        return <AnnouncementForm guild={selectedGuild} onBack={() => setView('plugins')} postToEdit={postToEdit} onFormSubmit={() => { setPostToEdit(null); setView('scheduled'); }} />;
       case 'scheduled':
         return <ScheduledPostsList guild={selectedGuild} onBack={() => setView('plugins')} onEdit={handleEditPost} />;
       default:
@@ -73,6 +74,7 @@ function App() {
     </div>
   );
 }
+
 
 // --- ################# COMPONENTS ################# ---
 
@@ -138,6 +140,7 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
   const [pages, setPages] = useState(postToEdit?.pages || [{ embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '' }]);
   const [scheduleDate, setScheduleDate] = useState(postToEdit?.scheduleDate ? new Date(postToEdit.scheduleDate).toISOString().slice(0, 16) : '');
   const [statusMessage, setStatusMessage] = useState('');
+  const [activePage, setActivePage] = useState(0);
 
   const handlePageChange = (index, field, value) => {
     const newPages = [...pages];
@@ -147,11 +150,14 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
 
   const addPage = () => {
     setPages([...pages, { embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '' }]);
+    setActivePage(pages.length);
   };
   
   const removePage = (index) => {
     if (pages.length <= 1) return;
-    setPages(pages.filter((_, i) => i !== index));
+    const newPages = pages.filter((_, i) => i !== index);
+    setPages(newPages);
+    setActivePage(Math.max(0, activePage - 1));
   };
 
   const handleSubmit = (e) => {
@@ -160,21 +166,18 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
     
     const url = postToEdit ? `${API_BASE}/api/scheduled/${postToEdit.id}` : `${API_BASE}/api/announcement`;
     const method = postToEdit ? 'PUT' : 'POST';
-
     const payload = { guildId: guild.id, channelId, message, pages, scheduleDate };
 
     fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      credentials: 'include'
+      credentials: 'include' // Crucial fix for authorization
     })
     .then(res => res.text().then(text => ({ ok: res.ok, text })))
     .then(({ ok, text }) => {
        setStatusMessage(ok ? `Announcement ${postToEdit ? 'updated' : 'scheduled'} successfully!` : `Error: ${text}`);
-       if (ok) {
-           setTimeout(() => onFormSubmit(), 1500); // Go back to plugins menu on success
-       }
+       if (ok) setTimeout(() => onFormSubmit(), 1500);
     })
     .catch(() => setStatusMessage('Error: Network request failed.'));
   };
@@ -198,23 +201,29 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
               <hr/>
 
               <h3>Pages</h3>
-              {pages.map((page, index) => (
-                <div key={index} className="page-editor">
+              <div className="page-tabs">
+                  {pages.map((_, index) => (
+                    <button key={index} type="button" className={activePage === index ? 'active' : ''} onClick={() => setActivePage(index)}>Page {index + 1}</button>
+                  ))}
+                  <button type="button" onClick={addPage} className="add-page-btn">+</button>
+              </div>
+
+              {pages.length > 0 && (
+                <div className="page-editor">
                   <div className="page-header">
-                    <h4>Page {index + 1}</h4>
-                    {pages.length > 1 && <button type="button" className="remove-page-btn" onClick={() => removePage(index)}>Remove</button>}
+                    <h4>Editing Page {activePage + 1}</h4>
+                    {pages.length > 1 && <button type="button" className="remove-page-btn" onClick={() => removePage(activePage)}>Remove Page</button>}
                   </div>
                   <label>Embed Title:</label>
-                  <input type="text" value={page.embedTitle} onChange={(e) => handlePageChange(index, 'embedTitle', e.target.value)} required />
+                  <input type="text" value={pages[activePage].embedTitle} onChange={(e) => handlePageChange(activePage, 'embedTitle', e.target.value)} required />
                   <label>Embed Description:</label>
-                  <textarea value={page.embedDescription} onChange={(e) => handlePageChange(index, 'embedDescription', e.target.value)} required></textarea>
+                  <textarea value={pages[activePage].embedDescription} onChange={(e) => handlePageChange(activePage, 'embedDescription', e.target.value)} required></textarea>
                   <label>Button Label (optional):</label>
-                  <input type="text" value={page.buttonLabel} onChange={(e) => handlePageChange(index, 'buttonLabel', e.target.value)} />
+                  <input type="text" value={pages[activePage].buttonLabel} onChange={(e) => handlePageChange(activePage, 'buttonLabel', e.target.value)} />
                   <label>Button URL (optional):</label>
-                  <input type="url" value={page.buttonUrl} onChange={(e) => handlePageChange(index, 'buttonUrl', e.target.value)} placeholder="https://example.com" />
+                  <input type="url" value={pages[activePage].buttonUrl} onChange={(e) => handlePageChange(activePage, 'buttonUrl', e.target.value)} placeholder="https://example.com" />
                 </div>
-              ))}
-              <button type="button" onClick={addPage}>Add Page</button>
+              )}
               <hr/>
 
               <label>Schedule Post Time</label>
@@ -225,6 +234,7 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
               {statusMessage && <p className="status-message">{statusMessage}</p>}
           </form>
         </div>
+        <LivePreview message={message} pages={pages} activePage={activePage} />
      </div>
   );
 }
@@ -285,6 +295,31 @@ function ScheduledPostsList({ guild, onBack, onEdit }) {
             </div>
         </div>
     );
+}
+
+function LivePreview({ message, pages, activePage }) {
+  const currentPage = pages[activePage] || {};
+  return (
+    <div className="preview-container">
+      <h3>Live Preview</h3>
+      <div className="discord-mock">
+        <div className="discord-message">
+          <div className="avatar"></div>
+          <div className="message-content">
+            <div className="username">Announcement Bot <span className="bot-tag">BOT</span></div>
+            <div className="text-content">{message}</div>
+            <div className="embed">
+              <div className="embed-title">{currentPage.embedTitle || 'Embed Title'}</div>
+              <div className="embed-description">{currentPage.embedDescription || 'Description will appear here...'}</div>
+            </div>
+            {currentPage.buttonLabel && currentPage.buttonUrl && (
+              <div className="discord-button">{currentPage.buttonLabel}</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default App;
