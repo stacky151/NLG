@@ -44,7 +44,7 @@ function App() {
     setPostToEdit(post);
     setView('form');
   };
-  
+
   const renderContent = () => {
     switch(view) {
       case 'servers':
@@ -140,13 +140,12 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
   const [roleId, setRoleId] = useState(postToEdit?.roleId || '');
   const [channelId, setChannelId] = useState(postToEdit?.channelId || '');
   const [message, setMessage] = useState(postToEdit?.message || '');
-  const [pages, setPages] = useState(postToEdit?.pages || [{ embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '', embedColor: '#0099ff' }]);
+  const [pages, setPages] = useState(postToEdit?.pages || [{ embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '', embedColor: '#0099ff', imageUrl: '', thumbnailUrl: '' }]);
   const [scheduleDate, setScheduleDate] = useState(postToEdit?.scheduleDate ? new Date(postToEdit.scheduleDate).toISOString().slice(0, 16) : '');
   const [statusMessage, setStatusMessage] = useState('');
   const [activePage, setActivePage] = useState(0);
 
   useEffect(() => {
-    // Fetch roles for the selected guild
     fetch(`${API_BASE}/api/guilds/${guild.id}/roles`, { credentials: 'include' })
       .then(res => res.json())
       .then(setRoles)
@@ -160,7 +159,7 @@ function AnnouncementForm({ guild, onBack, postToEdit, onFormSubmit }) {
   };
 
   const addPage = () => {
-    setPages([...pages, { embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '', embedColor: '#0099ff' }]);
+    setPages([...pages, { embedTitle: '', embedDescription: '', buttonLabel: '', buttonUrl: '', embedColor: '#0099ff', imageUrl: '', thumbnailUrl: '' }]);
     setActivePage(pages.length);
   };
   
@@ -287,7 +286,7 @@ function ScheduledPostsList({ guild, onBack, onEdit }) {
         fetch(`${API_BASE}/api/scheduled/${id}`, { method: 'DELETE', credentials: 'include' })
             .then(res => {
                 if (res.ok) {
-                    fetchPosts(); // Refresh the list
+                    fetchPosts();
                 } else {
                     alert('Failed to delete the post.');
                 }
@@ -336,8 +335,14 @@ function LivePreview({ message, pages, activePage, roleId, roles }) {
               {' '}{message}
             </div>
             <div className="embed" style={{ borderColor: currentPage.embedColor || '#0099ff' }}>
-              <div className="embed-title">{currentPage.embedTitle || 'Embed Title'}</div>
-              <div className="embed-description">{currentPage.embedDescription || 'Description will appear here...'}</div>
+              <div className="embed-content">
+                  <div className="embed-text">
+                    <div className="embed-title">{currentPage.embedTitle || 'Embed Title'}</div>
+                    <div className="embed-description">{currentPage.embedDescription || 'Description will appear here...'}</div>
+                  </div>
+                  {currentPage.thumbnailUrl && <img src={currentPage.thumbnailUrl} className="embed-thumbnail" alt="Thumbnail Preview"/>}
+              </div>
+              {currentPage.imageUrl && <img src={currentPage.imageUrl} className="embed-image" alt="Image Preview"/>}
             </div>
             {currentPage.buttonLabel && currentPage.buttonUrl && (
               <div className="discord-button">{currentPage.buttonLabel}</div>
